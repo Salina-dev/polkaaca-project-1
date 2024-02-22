@@ -21,7 +21,12 @@ impl Consensus for SimplePoa {
 	type Digest = ConsensusAuthority;
 
 	fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 1")
+		for auth in &self.authorities{
+			if header.consensus_digest == *auth{
+				return true;
+			}
+		}
+		false
 	}
 
 	fn seal(
@@ -29,7 +34,16 @@ impl Consensus for SimplePoa {
 		parent_digest: &Self::Digest,
 		partial_header: Header<()>,
 	) -> Option<Header<Self::Digest>> {
-		todo!("Exercise 2")
+		
+		let authority = self.authorities.first().cloned()?; // Using the first authority for simplicity
+        let header = Header {
+            parent: partial_header.parent,
+            height: partial_header.height,
+            extrinsics_root: partial_header.extrinsics_root,
+            state_root: partial_header.state_root,
+            consensus_digest: authority,
+        };
+        Some(header)
 	}
 }
 
