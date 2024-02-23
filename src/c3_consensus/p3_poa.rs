@@ -58,7 +58,11 @@ impl Consensus for PoaRoundRobinByHeight {
 	type Digest = ConsensusAuthority;
 
 	fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 3")
+		// Check if the authority corresponding to the block height is valid
+        if let Some(authority) = self.authorities.get((header.height % self.authorities.len() as u64) as usize) {
+            return header.consensus_digest == *authority;
+        }
+        false
 	}
 
 	fn seal(
@@ -66,7 +70,17 @@ impl Consensus for PoaRoundRobinByHeight {
 		parent_digest: &Self::Digest,
 		partial_header: Header<()>,
 	) -> Option<Header<Self::Digest>> {
-		todo!("Exercise 4")
+		// Find the authority corresponding to the next block height
+        let authority = self.authorities.get((partial_header.height % self.authorities.len() as u64) as usize)?;
+        // Create the header with the chosen authority
+        let header = Header {
+            parent: partial_header.parent,
+            height: partial_header.height,
+            extrinsics_root: partial_header.extrinsics_root,
+            state_root: partial_header.state_root,
+            consensus_digest: *authority,
+        };
+        Some(header)
 	}
 }
 
