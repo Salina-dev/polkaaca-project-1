@@ -74,7 +74,22 @@ pub trait Consensus {
 		parent_digest: &Self::Digest,
 		chain: &[Header<Self::Digest>],
 	) -> bool {
-		todo!("Exercise 1")
+		// Iterate over each pair of adjacent headers in the chain.
+        for window in chain.windows(2) {
+            let (parent_header, header) = match window {
+                [parent_header, header] => (parent_header, header),
+                _ => return false, // This should never happen due to the loop condition.
+            };
+
+            // Validate the current header against the parent header.
+            if !self.validate(&(), header) {
+                return false;
+            }
+
+            // Check if the current header's parent hash matches the previous header's hash.
+            if parent_header.consensus_digest != header.parent {
+                return false;
+            }
 	}
 
 	/// A human-readable name for this engine. This may be used in user-facing
@@ -92,12 +107,15 @@ impl Consensus for () {
 
 	/// All blocks are considered valid
 	fn validate(&self, _: &Self::Digest, _: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 2")
+		// Since this is a trivial consensus engine, all blocks are considered valid.
+        true
 	}
 
 	/// No real sealing is required. The partial header has all the necessary information
 	fn seal(&self, _: &Self::Digest, partial_header: Header<()>) -> Option<Header<Self::Digest>> {
-		todo!("Exercise 3")
+		// For a trivial consensus engine, no real sealing is required.
+        // We simply return a new header with the provided partial header.
+        Some(partial_header)
 	}
 }
 

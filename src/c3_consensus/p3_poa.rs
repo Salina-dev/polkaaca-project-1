@@ -110,7 +110,8 @@ impl Consensus for PoaRoundRobinBySlot {
 	type Digest = SlotDigest;
 
 	fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 5")
+		header.consensus_digest.signature == self.authorities[header.consensus_digest.slot as usize]
+            && header.consensus_digest.slot > parent_digest.slot
 	}
 
 	fn seal(
@@ -118,6 +119,21 @@ impl Consensus for PoaRoundRobinBySlot {
 		parent_digest: &Self::Digest,
 		partial_header: Header<()>,
 	) -> Option<Header<Self::Digest>> {
-		todo!("Exercise 6")
+		// Find the authority corresponding to the current slot
+        let authority = self.authorities.get(parent_digest.slot as usize)?;
+        // Create the slot digest for the next slot
+        let slot_digest = SlotDigest {
+            slot: parent_digest.slot + 1,
+            signature: *authority,
+        };
+        
+        // Create the header with the slot digest
+        Some(Header {
+            parent: partial_header.parent,
+            height: partial_header.height,
+            extrinsics_root: partial_header.extrinsics_root,
+            state_root: partial_header.state_root,
+            consensus_digest: slot_digest,
+        })
 	}
 }

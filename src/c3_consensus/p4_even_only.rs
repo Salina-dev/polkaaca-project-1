@@ -18,7 +18,8 @@ impl<Inner: Consensus> Consensus for EvenOnly<Inner> {
 	type Digest = Inner::Digest;
 
 	fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 1")
+		
+		todo!()
 	}
 
 	fn seal(
@@ -26,7 +27,8 @@ impl<Inner: Consensus> Consensus for EvenOnly<Inner> {
 		parent_digest: &Self::Digest,
 		partial_header: Header<()>,
 	) -> Option<Header<Self::Digest>> {
-		todo!("Exercise 2")
+		
+       todo!()
 	}
 }
 
@@ -34,5 +36,20 @@ impl<Inner: Consensus> Consensus for EvenOnly<Inner> {
 /// inner engine, create a PoW chain that is valid according to the inner consensus engine, but is
 /// not valid according to this engine because the state roots are not all even.
 fn almost_valid_but_not_all_even() -> Vec<Header<u64>> {
-	todo!("Exercise 3")
+	// Generate headers with alternating even and odd state roots
+    let mut headers = Vec::new();
+    let mut is_even = true;
+    for i in 0..10 {
+        let state_root = if is_even { i * 2 } else { i * 2 + 1 };
+        let header = Header {
+            parent: 0,
+            height: i as u64,
+            extrinsics_root: 0,
+            state_root,
+            consensus_digest: 0,
+        };
+        headers.push(header);
+        is_even = !is_even; // Toggle between even and odd state roots
+    }
+    headers
 }
