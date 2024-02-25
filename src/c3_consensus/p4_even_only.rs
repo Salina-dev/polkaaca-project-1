@@ -19,7 +19,15 @@ impl<Inner: Consensus> Consensus for EvenOnly<Inner> {
 
 	fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
 		
-		todo!()
+		// Delegate validation to the inner consensus engine
+        let inner_consensus = Inner::new(); // Instantiate inner consensus engine
+        let is_inner_valid = inner_consensus.validate(parent_digest, header);
+
+        // Check if the state root is even
+        let is_state_root_even = header.state_root % 2 == 0;
+
+        // The header is valid if the inner consensus engine deems it valid and the state root is even
+        is_inner_valid && is_state_root_even
 	}
 
 	fn seal(
@@ -28,7 +36,16 @@ impl<Inner: Consensus> Consensus for EvenOnly<Inner> {
 		partial_header: Header<()>,
 	) -> Option<Header<Self::Digest>> {
 		
-       todo!()
+       // Delegate sealing to the inner consensus engine
+	   let inner_consensus = Inner::new(); // Instantiate inner consensus engine
+	   let sealed_header = inner_consensus.seal(parent_digest, partial_header)?;
+
+	   // Check if the state root is even
+	   if sealed_header.state_root % 2 == 0 {
+		   Some(sealed_header) // Return the sealed header if the state root is even
+	   } else {
+		   None // Return None if the state root is not even
+	   }
 	}
 }
 
