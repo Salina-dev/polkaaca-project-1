@@ -29,7 +29,11 @@ where
 	type Digest = D;
 
 	fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 1")
+		if header.height < self.fork_height {
+            B::validate(parent_digest, header)
+        } else {
+            A::validate(parent_digest, header)
+        }
 	}
 
 	fn seal(
@@ -37,7 +41,11 @@ where
 		parent_digest: &Self::Digest,
 		partial_header: Header<()>,
 	) -> Option<Header<Self::Digest>> {
-		todo!("Exercise 2")
+		if partial_header.height < self.fork_height {
+            B::seal(parent_digest, partial_header)
+        } else {
+            A::seal(parent_digest, partial_header)
+        }
 	}
 }
 
