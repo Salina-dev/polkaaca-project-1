@@ -8,7 +8,7 @@
 
 use std::marker::PhantomData;
 
-use super::{Consensus, ConsensusAuthority, Header};
+use super::{Consensus, Header};
 
 
 /// A Higher-order consensus engine that represents a change from one set of consensus rules
