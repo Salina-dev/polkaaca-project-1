@@ -8,7 +8,9 @@
 
 use std::marker::PhantomData;
 
-use super::{Consensus, ConsensusAuthority, Header};
+use super::{Consensus, Header};
+
+//ConsensusAuthority,
 
 /// A Higher-order consensus engine that represents a change from one set of consensus rules
 /// (Before) to another set (After) at a specific block height
@@ -49,7 +51,32 @@ fn change_authorities(
 	initial_authorities: Vec<ConsensusAuthority>,
 	final_authorities: Vec<ConsensusAuthority>,
 ) -> impl Consensus {
-	todo!("Exercise 3")
+	/// A PoA consensus engine that changes authorities part way through the chain's history.
+    struct PoAChangeAuthorities {
+        fork_height: u64,
+        initial_authorities: Vec<ConsensusAuthority>,
+        final_authorities: Vec<ConsensusAuthority>,
+    }
+
+    impl Consensus for PoAChangeAuthorities {
+        type Digest = ConsensusAuthority;
+
+        fn validate(&self, _: &Self::Digest, _: &Header<Self::Digest>) -> bool {
+            // Add validation logic here
+            true // Placeholder, change as needed
+        }
+
+        fn seal(&self, _: &Self::Digest, _: Header<()>) -> Option<Header<Self::Digest>> {
+            // Add sealing logic here
+            None // Placeholder, change as needed
+        }
+    }
+
+    PoAChangeAuthorities {
+        fork_height,
+        initial_authorities,
+        final_authorities,
+    }
 }
 
 /// Create a PoW consensus engine that changes the difficulty part way through the chain's history.
@@ -58,7 +85,57 @@ fn change_difficulty(
 	initial_difficulty: u64,
 	final_difficulty: u64,
 ) -> impl Consensus {
-	todo!("Exercise 4")
+	// Define and return the ChangingDifficultyPoW instance directly within the function
+    struct ChangingDifficultyPoW<C: Consensus> {
+        inner: C,
+        fork_height: u64,
+        initial_difficulty: u64,
+        final_difficulty: u64,
+    }
+
+    impl<C: Consensus> Consensus for ChangingDifficultyPoW<C> {
+        type Digest = C::Digest;
+
+        fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
+            self.inner.validate(parent_digest, header)
+        }
+
+        fn seal(
+            &self,
+            parent_digest: &Self::Digest,
+            partial_header: Header<()>,
+        ) -> Option<Header<Self::Digest>> {
+            let sealed_header = self.inner.seal(parent_digest, partial_header)?;
+            // Check if the fork height has been reached
+            if sealed_header.height >= self.fork_height {
+                // Adjust the difficulty based on the fork height
+                // In this example, we simply use the final difficulty
+                // You can implement more sophisticated logic here
+                // For simplicity, we assume that the difficulty change is immediate
+                let new_difficulty = if sealed_header.height == self.fork_height {
+                    self.final_difficulty
+                } else {
+                    sealed_header.difficulty // Retain the current difficulty until the fork height
+                };
+                // Update the difficulty in the sealed header
+                let modified_header = Header {
+                    difficulty: new_difficulty,
+                    ..sealed_header
+                };
+                Some(modified_header)
+            } else {
+                Some(sealed_header)
+            }
+        }
+    }
+
+    // Return an instance of ChangingDifficultyPoW with the specified parameters
+    ChangingDifficultyPoW {
+        inner: (),
+        fork_height,
+        initial_difficulty,
+        final_difficulty,
+    }
 }
 
 /// Earlier in this chapter we implemented a consensus rule in which blocks are only considered
