@@ -10,7 +10,6 @@ use std::marker::PhantomData;
 
 use super::{Consensus, Header};
 
-//ConsensusAuthority,
 
 /// A Higher-order consensus engine that represents a change from one set of consensus rules
 /// (Before) to another set (After) at a specific block height
@@ -32,9 +31,9 @@ where
 
 	fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
 		if header.height < self.fork_height {
-            B::validate(parent_digest, header)
+            B::validate(&self, parent_digest.into(), header)
         } else {
-            A::validate(parent_digest, header)
+            A::validate(&self,parent_digest.into(), header)
         }
 	}
 
@@ -44,9 +43,9 @@ where
 		partial_header: Header<()>,
 	) -> Option<Header<Self::Digest>> {
 		if partial_header.height < self.fork_height {
-            B::seal(parent_digest, partial_header)
+            B::seal(parent_digest.into(), partial_header)
         } else {
-            A::seal(parent_digest, partial_header)
+            A::seal(parent_digest.into(), partial_header)
         }
 	}
 }
@@ -155,7 +154,41 @@ fn change_difficulty(
 /// Other than the evenness requirement, the consensus rules should not change at the fork. This
 /// function should work with either PoW, PoA, or anything else as the underlying consensus engine.
 fn even_after_given_height<Original: Consensus>(fork_height: u64) -> impl Consensus {
-	todo!("Exercise 5")
+	// Define a new consensus engine that wraps the original consensus engine
+    struct EvenAfterGivenHeight<Inner: Consensus> {
+        inner: Inner,
+        fork_height: u64,
+    }
+
+    impl<Inner: Consensus> Consensus for EvenAfterGivenHeight<Inner> {
+        type Digest = Inner::Digest;
+
+        fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
+            // Check if the fork height has been reached
+            if header.height >= self.fork_height {
+                // If after the fork height, also validate the evenness of the state root
+                header.state_root % 2 == 0 && self.inner.validate(parent_digest, header)
+            } else {
+                // If before the fork height, only validate using the original consensus rules
+                self.inner.validate(parent_digest, header)
+            }
+        }
+
+        fn seal(
+            &self,
+            parent_digest: &Self::Digest,
+            partial_header: Header<()>,
+        ) -> Option<Header<Self::Digest>> {
+            // Delegate sealing to the inner consensus engine
+            self.inner.seal(parent_digest, partial_header)
+        }
+    }
+
+    // Return an instance of EvenAfterGivenHeight with the specified parameters
+    EvenAfterGivenHeight {
+        inner: Original::default(), // Instantiate the original consensus engine
+        fork_height,
+    }
 }
 
 /// So far we have considered the simpler case where the consensus engines before and after the fork
