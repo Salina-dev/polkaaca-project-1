@@ -224,5 +224,31 @@ fn pow_to_poa(
 	difficulty: u64,
 	authorities: Vec<ConsensusAuthority>,
 ) -> impl Consensus {
-	todo!("Exercise 6")
+	impl Consensus for PowToPoa {
+		type Digest = PowOrPoaDigest;
+	
+		fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
+			// Determine if the block is before or after the fork height
+			if header.height < self.fork_height {
+				// Validate PoW block
+				// Implement logic to validate PoW block
+			} else {
+				// Validate PoA block
+				// Implement logic to validate PoA block
+			}
+		}
+	
+		fn seal(&self, parent_digest: &Self::Digest, partial_header: Header<()>) -> Option<Header<Self::Digest>> {
+			// Determine if the block is before or after the fork height
+			if partial_header.height < self.fork_height {
+				// Seal PoW block
+				// Implement logic to seal PoW block
+			} else {
+				// Seal PoA block
+				// Implement logic to seal PoA block
+			}
+		}
+	}
+	
+	/// Define the enum PowOrPoaDigest and implement the From trait for conversions from u64 and ConsensusAuthority.
 }
